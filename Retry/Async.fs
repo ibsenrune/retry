@@ -9,3 +9,5 @@ let bind f m = async {
     let! x = m
     return! f x
 }
+
+let lift = async.Return

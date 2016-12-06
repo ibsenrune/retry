@@ -2,6 +2,7 @@ module Retry
 
 open System
 open System.Net.Http
+open OptionOperators
 
 //let client = new HttpClient();
 // let send (request : HttpRequestMessage) = async { return new HttpResponseMessage() }
@@ -12,6 +13,9 @@ type Request = { Value : int }
 type Response = { Value :  int }
 
 let send (s : string) = 10 |> string
+
+let catchTimeout f v =
+    try Some (f v) with :? TimeoutException -> None
 
 let serializeRequest (r : Request) = r.Value |> string
 let parseResponse (s : string) =
@@ -29,7 +33,22 @@ let rec retry retries (f : 'a -> 'b option) a =
 
 let doIt =
     serializeRequest
-    >> retry 5 (send >> parseResponse)
+    >> retry 5 (catchTimeout send) >=> parseResponse
+
+let createUndoRequest = id
+
+let undoIt (r : Request) =
+    r 
+    |> createUndoRequest
+    |> serializeRequest
+    |> (retry 5 (catchTimeout send) >=> parseResponse)
+
+let ``or`` action compensation input =
+    match action input with
+    | Some v -> Some v
+    | None -> compensation input
+
+let action = doIt |> ``or`` <| undoIt
 
 [<EntryPoint>]
 let main argv =

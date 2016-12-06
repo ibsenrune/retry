@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Async.fs" />
+    <Compile Include="Option.fs" />
     <Compile Include="Retry.fs" />
     <None Include="App.config" />
   </ItemGroup>
