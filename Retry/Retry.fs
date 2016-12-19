@@ -4,12 +4,7 @@ open System
 open System.Net.Http
 open OptionOperators
 
-//let client = new HttpClient();
-// let send (request : HttpRequestMessage) = async { return new HttpResponseMessage() }
-// let readResponse (r : HttpResponseMessage) = r.Content.ReadAsStringAsync() |> Async.AwaitTask
-
 type Request = { Value : int }
-
 type Response = { Value :  int }
 
 let send (s : string) = 10 |> string
@@ -36,19 +31,20 @@ let doIt =
     >> retry 5 (catchTimeout send) >=> parseResponse
 
 let createUndoRequest = id
-
 let undoIt (r : Request) =
     r 
     |> createUndoRequest
     |> serializeRequest
     |> (retry 5 (catchTimeout send) >=> parseResponse)
 
-let ``or`` action compensation input =
+let ``butIfItFails`` action compensation input =
     match action input with
     | Some v -> Some v
     | None -> compensation input
 
-let action = doIt |> ``or`` <| undoIt
+let action = doIt |> ``butIfItFails`` <| undoIt
+
+let actionWithRetry = retry 3 action
 
 [<EntryPoint>]
 let main argv =
